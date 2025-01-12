@@ -1,155 +1,119 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart'; // Para cargar el logo en SVG
-import '../../domain/usecases/register_usecase.dart';
-import '../../data/user_repository.dart';
+import 'package:shopping_car/data/user_repository.dart';
 
-class RegisterPage extends StatelessWidget {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
 
-  RegisterPage({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
+
+  @override
+  State<RegisterPage> createState() => _RegisterPageState();
+}
+
+class _RegisterPageState extends State<RegisterPage> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  bool _isAdmin = false;
+
+  final UserRepository _userRepository = UserRepository();
+
+  Future<void> _registerUser() async {
+    if (_formKey.currentState!.validate()) {
+      final username = _usernameController.text.trim();
+      final password = _passwordController.text.trim();
+
+      try {
+        final userId = await _userRepository.registerUser(username, password, _isAdmin);
+        if (userId != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Usuario registrado con éxito.')),
+          );
+          Navigator.pop(context); // Regresa a la pantalla de inicio de sesión
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error al registrar el usuario.')),
+          );
+        }
+      } catch (e) {
+        print('Error al registrar usuario: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error inesperado. Inténtalo de nuevo.')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final registerUseCase = RegisterUseCase(UserRepository());
-
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
+      appBar: AppBar(title: const Text('Registro de Usuario')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: Form(
+            key: _formKey,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Logotipo SVG
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 40.0),
-                  child: SvgPicture.asset(
-                    'lib/assets/logo-strappberry 2.svg',
-                    height: 100, // Ajusta el tamaño según sea necesario
-                  ),
+                TextFormField(
+                  controller: _usernameController,
+                  decoration: const InputDecoration(labelText: 'Nombre de Usuario'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, ingresa un nombre de usuario.';
+                    }
+                    return null;
+                  },
                 ),
-                // Campo de Nombre
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Nombre',
-                    filled: true,
-                    fillColor: Color(0xFFE8EBF5), // Fondo claro
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 16),
-                // Campo de Email
-                TextField(
-                  controller: emailController,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    filled: true,
-                    fillColor: Color(0xFFE8EBF5),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 16),
-                // Campo de Contraseña
-                TextField(
-                  controller: passwordController,
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: const InputDecoration(labelText: 'Contraseña'),
                   obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: 'Contraseña',
-                    filled: true,
-                    fillColor: Color(0xFFE8EBF5),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, ingresa una contraseña.';
+                    } else if (value.length < 6) {
+                      return 'La contraseña debe tener al menos 6 caracteres.';
+                    }
+                    return null;
+                  },
                 ),
-                SizedBox(height: 16),
-                // Campo de Confirmar Contraseña
-                TextField(
-                  controller: confirmPasswordController,
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _confirmPasswordController,
+                  decoration: const InputDecoration(labelText: 'Confirmar Contraseña'),
                   obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: 'Confirmar contraseña',
-                    filled: true,
-                    fillColor: Color(0xFFE8EBF5),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, confirma tu contraseña.';
+                    } else if (value != _passwordController.text) {
+                      return 'Las contraseñas no coinciden.';
+                    }
+                    return null;
+                  },
                 ),
-                SizedBox(height: 24),
-                // Botón de Registro
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _isAdmin,
+                      onChanged: (value) {
+                        setState(() {
+                          _isAdmin = value!;
+                        });
+                      },
+                    ),
+                    const Text('Registrar como administrador'),
+                  ],
+                ),
+                const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () async {
-                      final name = nameController.text.trim();
-                      final email = emailController.text.trim();
-                      final password = passwordController.text.trim();
-                      final confirmPassword = confirmPasswordController.text.trim();
-
-                      if (password != confirmPassword) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Las contraseñas no coinciden')),
-                        );
-                        return;
-                      }
-
-                      if (name.isEmpty || email.isEmpty || password.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Por favor, completa todos los campos')),
-                        );
-                        return;
-                      }
-
-                      try {
-                        await registerUseCase.execute(email, password, false);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Registro exitoso')),
-                        );
-                        Navigator.pop(context); // Regresa a la página de inicio de sesión
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error al registrar: $e')),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF333366), // Navy color
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(
-                      'Registrarse',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 16),
-                // Enlace para iniciar sesión
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context); // Vuelve a la página de inicio de sesión
-                  },
-                  child: Text(
-                    '¿Ya tienes cuenta? Inicia sesión',
-                    style: TextStyle(
-                      color: Color(0xFF333366), // Navy color
-                      fontSize: 14,
-                    ),
+                    onPressed: _registerUser,
+                    child: const Text('Registrar'),
                   ),
                 ),
               ],

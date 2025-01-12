@@ -185,27 +185,19 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       const SizedBox(height: 30.0),
-
-                      // Texto: ¿Aún no tienes cuenta?
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
-                            '¿Aún no tienes cuenta? ',
-                            style: TextStyle(
-                              color: Colors.black45,
-                            ),
-                          ),
+                          const Text('¿No tienes cuenta? '),
                           GestureDetector(
                             onTap: () {
-                              // Redirige al registro
+                              Navigator.pushNamed(context, '/register');
                             },
                             child: const Text(
                               'Regístrate',
                               style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blueAccent,
-                              ),
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ),
                         ],

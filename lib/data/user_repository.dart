@@ -3,80 +3,176 @@ import 'database_helper.dart';
 class UserRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
+  static const String usersTable = 'users';
+  static const String productsTable = 'products';
+
   /// Registra un nuevo usuario en la base de datos.
   /// [isAdmin] debe ser `true` para usuarios administradores.
-  Future<int> registerUser(String username, String password, bool isAdmin) async {
-    final db = await _dbHelper.database;
-
-    // Inserta el usuario en la tabla 'users'
-    return await db.insert('users', {
-      'username': username,
-      'password': password,
-      'isAdmin': isAdmin ? 1 : 0, // 1 para admin, 0 para cliente
-    });
+  Future<int?> registerUser(String username, String password, bool isAdmin) async {
+    try {
+      final db = await _dbHelper.database;
+      return await db.insert(usersTable, {
+        'username': username,
+        'password': password,
+        'isAdmin': isAdmin ? 1 : 0, // 1 para admin, 0 para cliente
+      });
+    } catch (e) {
+      print('Error al registrar usuario: $e');
+      return null;
+    }
   }
 
   /// Verifica las credenciales de inicio de sesión.
-  /// Devuelve un mapa con los datos del usuario si las credenciales son correctas.
   Future<Map<String, dynamic>?> loginUser(String username, String password) async {
-  final db = await _dbHelper.database;
-
-  // Realiza la consulta para buscar el usuario
-  final result = await db.query(
-    'users',
-    where: 'username = ? AND password = ?',
-    whereArgs: [username, password],
-  );
-
-  // Imprime el resultado para depuración
-  print('Resultado de la consulta: $result');
-
-  return result.isNotEmpty ? result.first : null;
-}
+    try {
+      final db = await _dbHelper.database;
+      final result = await db.query(
+        usersTable,
+        where: 'username = ? AND password = ?',
+        whereArgs: [username, password],
+      );
+      print('Resultado de la consulta de login: $result');
+      return result.isNotEmpty ? result.first : null;
+    } catch (e) {
+      print('Error en loginUser: $e');
+      return null;
+    }
+  }
 
   /// Lista todos los usuarios registrados en la base de datos.
   Future<List<Map<String, dynamic>>> getAllUsers() async {
-    final db = await _dbHelper.database;
-
-    // Consulta SQL para obtener todos los usuarios
-    return await db.query('users');
+    try {
+      final db = await _dbHelper.database;
+      return await db.query(usersTable);
+    } catch (e) {
+      print('Error al obtener usuarios: $e');
+      return [];
+    }
   }
 
   /// Elimina un usuario específico basado en su ID.
-  Future<int> deleteUser(int userId) async {
-    final db = await _dbHelper.database;
-
-    // Elimina el usuario de la tabla 'users'
-    return await db.delete(
-      'users',
-      where: 'id = ?',
-      whereArgs: [userId],
-    );
+  Future<int?> deleteUser(int userId) async {
+    try {
+      final db = await _dbHelper.database;
+      return await db.delete(
+        usersTable,
+        where: 'id = ?',
+        whereArgs: [userId],
+      );
+    } catch (e) {
+      print('Error al eliminar usuario: $e');
+      return null;
+    }
   }
 
   /// Actualiza la información de un usuario.
-  Future<int> updateUser(int userId, String username, String password, bool isAdmin) async {
-    final db = await _dbHelper.database;
-
-    // Actualiza los datos del usuario
-    return await db.update(
-      'users',
-      {
-        'username': username,
-        'password': password,
-        'isAdmin': isAdmin ? 1 : 0,
-      },
-      where: 'id = ?',
-      whereArgs: [userId],
-    );
+  Future<int?> updateUser(int userId, String username, String password, bool isAdmin) async {
+    try {
+      final db = await _dbHelper.database;
+      return await db.update(
+        usersTable,
+        {
+          'username': username,
+          'password': password,
+          'isAdmin': isAdmin ? 1 : 0,
+        },
+        where: 'id = ?',
+        whereArgs: [userId],
+      );
+    } catch (e) {
+      print('Error al actualizar usuario: $e');
+      return null;
+    }
   }
-}
 
-void printAllUsers() async {
-  final db = await DatabaseHelper().database;
-  final users = await db.query('users');
+  /// Agrega un producto a la base de datos.
+  Future<int?> addProduct(String name, double price, String category, String description, String? image) async {
+    try {
+      final db = await _dbHelper.database;
+      return await db.insert(productsTable, {
+        'name': name,
+        'price': price,
+        'category': category,
+        'description': description,
+        'image': image, // Puede ser null si no se proporciona una imagen
+      });
+    } catch (e) {
+      print('Error al agregar producto: $e');
+      return null;
+    }
+  }
 
-  for (var user in users) {
-    print('Usuario: $user');
+  /// Obtiene todos los productos de la base de datos.
+  Future<List<Map<String, dynamic>>> getProducts() async {
+    try {
+      final db = await _dbHelper.database;
+      return await db.query(productsTable);
+    } catch (e) {
+      print('Error al obtener productos: $e');
+      return [];
+    }
+  }
+
+  /// Elimina un producto por su ID.
+  Future<int?> deleteProduct(int productId) async {
+    try {
+      final db = await _dbHelper.database;
+      return await db.delete(
+        productsTable,
+        where: 'id = ?',
+        whereArgs: [productId],
+      );
+    } catch (e) {
+      print('Error al eliminar producto: $e');
+      return null;
+    }
+  }
+
+  /// Actualiza un producto existente.
+  Future<int?> updateProduct(int productId, String name, double price, String category, String description, String? image) async {
+    try {
+      final db = await _dbHelper.database;
+      return await db.update(
+        productsTable,
+        {
+          'name': name,
+          'price': price,
+          'category': category,
+          'description': description,
+          'image': image,
+        },
+        where: 'id = ?',
+        whereArgs: [productId],
+      );
+    } catch (e) {
+      print('Error al actualizar producto: $e');
+      return null;
+    }
+  }
+
+  /// Depuración: Imprime todos los usuarios en la consola.
+  Future<void> printAllUsers() async {
+    try {
+      final db = await _dbHelper.database;
+      final users = await db.query(usersTable);
+      for (var user in users) {
+        print('Usuario: $user');
+      }
+    } catch (e) {
+      print('Error al imprimir usuarios: $e');
+    }
+  }
+
+  /// Depuración: Imprime todos los productos en la consola.
+  Future<void> printAllProducts() async {
+    try {
+      final db = await _dbHelper.database;
+      final products = await db.query(productsTable);
+      for (var product in products) {
+        print('Producto: $product');
+      }
+    } catch (e) {
+      print('Error al imprimir productos: $e');
+    }
   }
 }

@@ -5,7 +5,7 @@ class RegisterUseCase {
 
   RegisterUseCase(this.userRepository);
 
-  Future<int> execute(String username, String password, bool isAdmin) async {
+  Future<int?> execute(String username, String password, bool isAdmin) async {
     return await userRepository.registerUser(username, password, isAdmin);
   }
 }
