@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../data/user_repository.dart';
-import '../../domain/usecases/login_usecase.dart';
+import 'package:shopping_car/domain/usecases/login_usecase.dart';
+import 'package:shopping_car/data/user_repository.dart';
+import 'package:shopping_car/presentation/pages/customer_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -10,215 +11,189 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _formLoginKey = GlobalKey<FormState>();
-  final TextEditingController usernameController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final loginUseCase = LoginUseCase(UserRepository());
-  bool rememberMe = true;
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isPasswordVisible = false;
 
-  @override
-  void dispose() {
-    // Libera los controladores para evitar fugas de memoria
-    usernameController.dispose();
-    passwordController.dispose();
-    super.dispose();
+  final LoginUseCase _loginUseCase = LoginUseCase(UserRepository());
+
+  Future<void> _loginUser() async {
+    if (_formKey.currentState!.validate()) {
+      final username = _usernameController.text.trim();
+      final password = _passwordController.text.trim();
+
+      try {
+        final user = await _loginUseCase.execute(username, password);
+        if (user != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Inicio de sesión exitoso.')),
+          );
+          if (user['isAdmin'] == 1) {
+            Navigator.pushNamed(context, '/admin');
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CustomerPage(username: username),
+              ),
+            );
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Credenciales inválidas.')),
+          );
+        }
+      } catch (e) {
+        print('Error al iniciar sesión: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error inesperado. Inténtalo de nuevo.'),
+          ),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blueAccent.shade100,
-      body: Column(
-        children: [
-          const Expanded(
-            flex: 1,
-            child: SizedBox(height: 10),
-          ),
-          Expanded(
-            flex: 7,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(25.0, 50.0, 25.0, 20.0),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(40.0),
-                  topRight: Radius.circular(40.0),
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Stack(
+              children: [
+                Container(
+                  height: 200,
+                  color: const Color(0xFF353C59),
                 ),
-              ),
-              child: SingleChildScrollView(
-                child: Form(
-                  key: _formLoginKey,
+                Positioned(
+                  top: 180,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(30),
+                        topRight: Radius.circular(30),
+                      ),
+                    ),
+                  ),
+                ),
+                Center(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Título o logotipo
-                      Text(
-                        'Welcome back',
-                        style: TextStyle(
-                          fontSize: 30.0,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.blueAccent,
-                        ),
-                      ),
-                      const SizedBox(height: 40.0),
-
-                      // Campo: Email
-                      TextFormField(
-                        controller: usernameController,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your username';
-                          }
-                          return null;
-                        },
-                        decoration: InputDecoration(
-                          label: const Text('Username'),
-                          hintText: 'Enter your username',
-                          hintStyle: const TextStyle(
-                            color: Colors.black26,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 25.0),
-
-                      // Campo: Contraseña
-                      TextFormField(
-                        controller: passwordController,
-                        obscureText: true,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your password';
-                          }
-                          return null;
-                        },
-                        decoration: InputDecoration(
-                          label: const Text('Password'),
-                          hintText: 'Enter your password',
-                          hintStyle: const TextStyle(
-                            color: Colors.black26,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 25.0),
-
-                      // Checkbox: Recordar datos
-                      Row(
-                        children: [
-                          Checkbox(
-                            value: rememberMe,
-                            onChanged: (bool? value) {
-                              setState(() {
-                                rememberMe = value!;
-                              });
-                            },
-                            activeColor: Colors.blueAccent,
-                          ),
-                          const Text(
-                            'Remember me',
-                            style: TextStyle(
-                              color: Colors.black45,
-                            ),
-                          ),
-                          const Spacer(),
-                          GestureDetector(
-                            onTap: () {
-                              // Lógica para olvidar contraseña
-                            },
-                            child: const Text(
-                              'Forgot password?',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blueAccent,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 25.0),
-
-                      // Botón: Login
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            if (_formLoginKey.currentState!.validate()) {
-                              final username = usernameController.text.trim();
-                              final password = passwordController.text.trim();
-
-                              print(
-                                  'Intentando iniciar sesión con: $username / $password');
-
-                              final result = await loginUseCase.execute(
-                                  username, password);
-
-                              if (result != null) {
-                                print('Inicio de sesión exitoso: $result');
-                                if (result['isAdmin'] == 1) {
-                                  Navigator.pushReplacementNamed(
-                                      context, '/admin');
-                                } else {
-                                  Navigator.pushReplacementNamed(
-                                      context, '/customer');
-                                }
-                              } else {
-                                print('Credenciales inválidas');
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text('Credenciales inválidas')),
-                                );
-                              }
-                            }
-                          },
-                          child: const Text('Login'),
-                        ),
-                      ),
-                      const SizedBox(height: 30.0),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text('¿No tienes cuenta? '),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.pushNamed(context, '/register');
-                            },
-                            child: const Text(
-                              'Regístrate',
-                              style: TextStyle(
-                                  color: Colors.blue,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 40.0),
-
-                      // Pie de página
-                      const Text(
-                        'Nombre candidato | correo@candidato.com',
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
+                      const SizedBox(height: 70),
+                      Image.asset(
+                        'lib/presentation/assets/logo-strappberry.png',
+                        height: 60,
                       ),
                     ],
                   ),
                 ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextFormField(
+                      controller: _usernameController,
+                      decoration: InputDecoration(
+                        labelText: 'Nombre de Usuario',
+                        filled: true,
+                        fillColor: const Color(0xFFE0E3F0),
+                        border: InputBorder.none,
+                        labelStyle: const TextStyle(
+                          color: Color(0xFF686B75),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, ingresa tu nombre de usuario.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: !_isPasswordVisible,
+                      decoration: InputDecoration(
+                        labelText: 'Contraseña',
+                        filled: true,
+                        fillColor: const Color(0xFFE0E3F0),
+                        border: InputBorder.none,
+                        labelStyle: const TextStyle(
+                          color: Color(0xFF686B75),
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _isPasswordVisible
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: const Color(0xFF686B75),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _isPasswordVisible = !_isPasswordVisible;
+                            });
+                          },
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, ingresa tu contraseña.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 30),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF353C59),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: _loginUser,
+                        child: const Text(
+                          'Iniciar Sesión',
+                          style: TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Center(
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.pushNamed(context, '/register');
+                        },
+                        child: const Text(
+                          '¿No tienes cuenta? Regístrate',
+                          style: TextStyle(
+                            color: Color(0xFF353C59),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

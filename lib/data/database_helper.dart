@@ -50,7 +50,7 @@ class DatabaseHelper {
       description TEXT,
       image TEXT
     )
-  ''');
+    ''');
 
     // Inserta el usuario administrador por defecto
     await db.insert('users', {
@@ -62,7 +62,7 @@ class DatabaseHelper {
 
   /// Maneja las migraciones cuando se actualiza la versión de la base de datos
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
+    if (oldVersion < 4) {
       // Crea una nueva tabla con la estructura correcta
       await db.execute('''
       CREATE TABLE products_new (
@@ -77,8 +77,8 @@ class DatabaseHelper {
 
       // Copia los datos de la tabla antigua a la nueva
       await db.execute('''
-      INSERT INTO products_new (id, name, price, category, image)
-      SELECT id, name, price, category, image
+      INSERT INTO products_new (id, name, price, category, description, image)
+      SELECT id, name, price, category, description, image
       FROM products
     ''');
 
@@ -87,17 +87,6 @@ class DatabaseHelper {
 
       // Renombra la tabla nueva a 'products'
       await db.execute('ALTER TABLE products_new RENAME TO products');
-    }
-    Future<Database> _initDB() async {
-      final dbPath = await getDatabasesPath();
-      final path = join(dbPath, 'store.db');
-
-      return await openDatabase(
-        path,
-        version: 2, // Incrementa la versión si no lo has hecho antes
-        onCreate: _createTables,
-        onUpgrade: _onUpgrade,
-      );
     }
   }
 }

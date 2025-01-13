@@ -7,14 +7,13 @@ class UserRepository {
   static const String productsTable = 'products';
 
   /// Registra un nuevo usuario en la base de datos.
-  /// [isAdmin] debe ser `true` para usuarios administradores.
   Future<int?> registerUser(String username, String password, bool isAdmin) async {
     try {
       final db = await _dbHelper.database;
       return await db.insert(usersTable, {
         'username': username,
         'password': password,
-        'isAdmin': isAdmin ? 1 : 0, // 1 para admin, 0 para cliente
+        'isAdmin': isAdmin ? 1 : 0,
       });
     } catch (e) {
       print('Error al registrar usuario: $e');
@@ -39,7 +38,7 @@ class UserRepository {
     }
   }
 
-  /// Lista todos los usuarios registrados en la base de datos.
+  /// Lista todos los usuarios registrados.
   Future<List<Map<String, dynamic>>> getAllUsers() async {
     try {
       final db = await _dbHelper.database;
@@ -94,7 +93,7 @@ class UserRepository {
         'price': price,
         'category': category,
         'description': description,
-        'image': image, // Puede ser null si no se proporciona una imagen
+        'image': image,
       });
     } catch (e) {
       print('Error al agregar producto: $e');
@@ -102,7 +101,7 @@ class UserRepository {
     }
   }
 
-  /// Obtiene todos los productos de la base de datos.
+  /// Obtiene todos los productos.
   Future<List<Map<String, dynamic>>> getProducts() async {
     try {
       final db = await _dbHelper.database;
@@ -150,7 +149,7 @@ class UserRepository {
     }
   }
 
-  /// Depuración: Imprime todos los usuarios en la consola.
+  /// Imprime todos los usuarios para depuración.
   Future<void> printAllUsers() async {
     try {
       final db = await _dbHelper.database;
@@ -163,7 +162,7 @@ class UserRepository {
     }
   }
 
-  /// Depuración: Imprime todos los productos en la consola.
+  /// Imprime todos los productos para depuración.
   Future<void> printAllProducts() async {
     try {
       final db = await _dbHelper.database;
@@ -175,4 +174,16 @@ class UserRepository {
       print('Error al imprimir productos: $e');
     }
   }
+
+  Future<List<Map<String, dynamic>>> fetchAllProducts() async {
+    try {
+      final db = await _dbHelper.database;
+      return await db.query('products');
+    } catch (e) {
+      print('Error al obtener productos: $e');
+      return [];
+    }
+  }
+
+  
 }
