@@ -97,7 +97,8 @@ class _LoginPageState extends State<LoginPage> {
               ],
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -190,6 +191,17 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ],
                 ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: Text(
+                'Josué Benjamín Maldonado Urbina | jb.maldonado.u@gmail.com',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+                textAlign: TextAlign.center,
               ),
             ),
           ],
